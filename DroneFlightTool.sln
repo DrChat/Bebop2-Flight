@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DroneFlightTool", "DroneFlightTool\DroneFlightTool.csproj", "{78BDAB7B-D749-4876-85B0-2F9935B025C8}"
+	ProjectSection(ProjectDependencies) = postProject
+		{76F36551-9EF9-4175-9656-AB5F45BA1AC2} = {76F36551-9EF9-4175-9656-AB5F45BA1AC2}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bebop2.FlightData", "Bebop.FlightData\Bebop2.FlightData.csproj", "{76F36551-9EF9-4175-9656-AB5F45BA1AC2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bebop2.Control", "Bebop2.Control\Bebop2.Control.csproj", "{2DB01173-8F39-4D16-A0BF-FC8CBFE7741E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{78BDAB7B-D749-4876-85B0-2F9935B025C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78BDAB7B-D749-4876-85B0-2F9935B025C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78BDAB7B-D749-4876-85B0-2F9935B025C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78BDAB7B-D749-4876-85B0-2F9935B025C8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{76F36551-9EF9-4175-9656-AB5F45BA1AC2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{76F36551-9EF9-4175-9656-AB5F45BA1AC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{76F36551-9EF9-4175-9656-AB5F45BA1AC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{76F36551-9EF9-4175-9656-AB5F45BA1AC2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2DB01173-8F39-4D16-A0BF-FC8CBFE7741E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2DB01173-8F39-4D16-A0BF-FC8CBFE7741E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2DB01173-8F39-4D16-A0BF-FC8CBFE7741E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2DB01173-8F39-4D16-A0BF-FC8CBFE7741E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
