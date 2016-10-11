@@ -116,6 +116,22 @@ namespace Bebop2.Control {
       // ARCOMMANDS_ID_ARDRONE3_CLASS_PILOTINGSTATE
       // ARCOMMANDS_ID_ARDRONE3_PILOTINGSTATE_CMD_ATTITUDECHANGED
       [EventInfo(1, 4, 6)]
+      public class EvtAttitudeChanged : Event {
+        public float Roll { get; private set; }
+        public float Pitch { get; private set; }
+        public float Yaw { get; private set; }
+
+        public override void SetData(BinaryReader reader) {
+          Roll = reader.ReadSingle();
+          Pitch = reader.ReadSingle();
+          Yaw = reader.ReadSingle();
+        }
+      }
+
+      // ARCOMMANDS_ID_PROJECT_ARDRONE3
+      // ARCOMMANDS_ID_ARDRONE3_CLASS_PILOTINGSTATE
+      // ARCOMMANDS_ID_ARDRONE3_PILOTINGSTATE_CMD_ALTITUDECHANGED
+      [EventInfo(1, 4, 8)]
       public class EvtAltitudeChanged : Event {
         public double Altitude { get; private set; }
 

@@ -119,13 +119,18 @@ namespace Bebop2.Control {
           // PilotingState
           case 4:
             switch (gevt.ID) {
+              // Position
+              case 4: {
+                var evt = (Events.PilotingState.EvtPositionChanged)gevt;
+                OnPositionChanged(this, new double[]{evt.Latitude, evt.Longitude, evt.Altitude});
+              } break;
               // Speed
               case 5: {
                 var evt = (Events.PilotingState.EvtSpeedChanged)gevt;
                 OnSpeedChanged(this, new float[]{evt.SpeedX, evt.SpeedY, evt.SpeedZ});
               } break;
               // Altitude
-              case 6: {
+              case 8: {
                 var evt = (Events.PilotingState.EvtAltitudeChanged)gevt;
                 OnAltitudeChanged(this, evt.Altitude);
               } break;
@@ -138,6 +143,7 @@ namespace Bebop2.Control {
     // Events
     public event EventHandler<byte> OnBatteryChanged;
     public event EventHandler<short> OnWifiSignalChanged;
+    public event EventHandler<double[]> OnPositionChanged;
     public event EventHandler<float[]> OnSpeedChanged;
     public event EventHandler<double> OnAltitudeChanged;
 
