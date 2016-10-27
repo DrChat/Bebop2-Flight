@@ -29,9 +29,10 @@
       this.panel2 = new System.Windows.Forms.Panel();
       this.control_panel_ = new System.Windows.Forms.FlowLayoutPanel();
       this.battery_ = new System.Windows.Forms.Label();
-      this.altitude_ = new System.Windows.Forms.Label();
-      this.speed_ = new System.Windows.Forms.Label();
       this.wifi_ = new System.Windows.Forms.Label();
+      this.speed_ = new System.Windows.Forms.Label();
+      this.altitude_ = new System.Windows.Forms.Label();
+      this.position_ = new System.Windows.Forms.Label();
       this.panel2.SuspendLayout();
       this.control_panel_.SuspendLayout();
       this.SuspendLayout();
@@ -80,8 +81,11 @@
       // 
       // control_panel_
       // 
+      this.control_panel_.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
       this.control_panel_.Controls.Add(this.battery_);
       this.control_panel_.Controls.Add(this.wifi_);
+      this.control_panel_.Controls.Add(this.position_);
       this.control_panel_.Controls.Add(this.speed_);
       this.control_panel_.Controls.Add(this.altitude_);
       this.control_panel_.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
@@ -100,24 +104,6 @@
       this.battery_.TabIndex = 0;
       this.battery_.Text = "Battery: 100%";
       // 
-      // altitude_
-      // 
-      this.altitude_.AutoSize = true;
-      this.altitude_.Location = new System.Drawing.Point(3, 39);
-      this.altitude_.Name = "altitude_";
-      this.altitude_.Size = new System.Drawing.Size(60, 13);
-      this.altitude_.TabIndex = 1;
-      this.altitude_.Text = "Altitude: 0ft";
-      // 
-      // speed_
-      // 
-      this.speed_.AutoSize = true;
-      this.speed_.Location = new System.Drawing.Point(3, 26);
-      this.speed_.Name = "speed_";
-      this.speed_.Size = new System.Drawing.Size(68, 13);
-      this.speed_.TabIndex = 2;
-      this.speed_.Text = "Speed: 0 0 0";
-      // 
       // wifi_
       // 
       this.wifi_.AutoSize = true;
@@ -126,6 +112,33 @@
       this.wifi_.Size = new System.Drawing.Size(67, 13);
       this.wifi_.TabIndex = 3;
       this.wifi_.Text = "Wi-Fi: 0 dBm";
+      // 
+      // speed_
+      // 
+      this.speed_.AutoSize = true;
+      this.speed_.Location = new System.Drawing.Point(3, 39);
+      this.speed_.Name = "speed_";
+      this.speed_.Size = new System.Drawing.Size(68, 13);
+      this.speed_.TabIndex = 2;
+      this.speed_.Text = "Speed: 0 0 0";
+      // 
+      // altitude_
+      // 
+      this.altitude_.AutoSize = true;
+      this.altitude_.Location = new System.Drawing.Point(3, 52);
+      this.altitude_.Name = "altitude_";
+      this.altitude_.Size = new System.Drawing.Size(60, 13);
+      this.altitude_.TabIndex = 1;
+      this.altitude_.Text = "Altitude: 0ft";
+      // 
+      // position_
+      // 
+      this.position_.AutoSize = true;
+      this.position_.Location = new System.Drawing.Point(3, 26);
+      this.position_.Name = "position_";
+      this.position_.Size = new System.Drawing.Size(74, 13);
+      this.position_.TabIndex = 4;
+      this.position_.Text = "Position: 0 0 0";
       // 
       // MainForm
       // 
@@ -156,6 +169,7 @@
     private System.Windows.Forms.Label altitude_;
     private System.Windows.Forms.Label speed_;
     private System.Windows.Forms.Label wifi_;
+    private System.Windows.Forms.Label position_;
   }
 }
 
