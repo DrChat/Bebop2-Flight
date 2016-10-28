@@ -44,6 +44,11 @@ namespace DroneFlightTool {
                            p[2].ToString("0.00");
         });
       };
+      drone_.OnPositionChanged += (s, p) => {
+        Invoke((MethodInvoker)delegate {
+          position_.Text = "Position: " + p[0].ToString("0.0000000") + " " + p[1].ToString("0.000000") + " " + p[2].ToString("0.0000");
+        });
+      };
       drone_.OnSpeedChanged += (s, v) => {
         Invoke((MethodInvoker)delegate {
           speed_.Text = "Speed: " + v[0].ToString("0.00") + " " +
