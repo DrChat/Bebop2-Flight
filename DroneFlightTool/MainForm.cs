@@ -14,6 +14,7 @@ using System.Threading;
 using System.Windows.Input;
 using System.Numerics;
 using System.Windows.Threading;
+using System.Diagnostics;
 
 namespace DroneFlightTool {
   public partial class MainForm : Form {
@@ -27,19 +28,26 @@ namespace DroneFlightTool {
           if (b < 20) {
             battery_.BackColor = Color.Red;
           } else {
-            battery_.BackColor = Color.White;
+            battery_.BackColor = default(Color);
           }
         });
       };
       drone_.OnWifiSignalChanged += (s, dbm) => {
-        Invoke((MethodInvoker)delegate {
-          wifi_.Text = "Wi-Fi: " + dbm + " dBm";
-        });
+        Invoke(
+            (MethodInvoker)delegate { wifi_.Text = "Wi-Fi: " + dbm + " dBm"; });
       };
 
+      drone_.OnPositionChanged += (s, p) => {
+        Invoke((MethodInvoker)delegate {
+          position_.Text = "Position: " + p[0].ToString("0.000000") + " " +
+                           p[1].ToString("0.000000") + " " +
+                           p[2].ToString("0.00");
+        });
+      };
       drone_.OnSpeedChanged += (s, v) => {
         Invoke((MethodInvoker)delegate {
-          speed_.Text = "Speed: " + v[0].ToString("0.00") + " " + v[1].ToString("0.00") + " " + v[2].ToString("0.00");
+          speed_.Text = "Speed: " + v[0].ToString("0.00") + " " +
+                        v[1].ToString("0.00") + " " + v[2].ToString("0.00");
         });
       };
       drone_.OnAltitudeChanged += (s, a) => {
@@ -68,6 +76,20 @@ namespace DroneFlightTool {
       control_panel_.Visible = false;
     }
 
+    private void MainForm_KeyPress(object sender, KeyPressEventArgs e) {
+      if (drone_.Connected) {
+        // TODO(justin): Use this instead of the input driver thread
+      }
+    }
+
+    private void MainForm_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e) {
+
+    }
+
+    private void MainForm_KeyUp(object sender, System.Windows.Forms.KeyEventArgs e) {
+
+    }
+
     private async void connect_btn__Click(object sender, EventArgs e) {
       if (drone_.Connected) {
         // TODO(justin): Disconnect
@@ -85,7 +107,12 @@ namespace DroneFlightTool {
     }
 
     private void InputDriverThread() {
+      Stopwatch stopwatch = new Stopwatch();
+      stopwatch.Start();
       while (driver_running_) {
+        stopwatch.Stop();
+        double dt = (double)stopwatch.ElapsedTicks / Stopwatch.Frequency;
+
         sbyte roll = 0;
         sbyte pitch = 0;
         sbyte yaw = 0;
@@ -93,44 +120,47 @@ namespace DroneFlightTool {
 
         gamepad_.Update();
         if (!gamepad_.Connected) {
-          if (Keyboard.IsKeyDown(Key.T)) {
-            drone_.TakeOff();
-            continue;
-          } else if (Keyboard.IsKeyDown(Key.L)) {
-            drone_.Land();
-            continue;
-          } else if (Keyboard.IsKeyDown(Key.E)) {
-            drone_.EmergencyLand();
-            continue;
-          }
+          // Only run keyboard input if the main form is in focus.
+          if (Focused) {
+            if (Keyboard.IsKeyDown(Key.T)) {
+              drone_.TakeOff();
+              continue;
+            } else if (Keyboard.IsKeyDown(Key.L)) {
+              drone_.Land();
+              continue;
+            } else if (Keyboard.IsKeyDown(Key.E)) {
+              drone_.EmergencyLand();
+              continue;
+            }
 
-          if (Keyboard.IsKeyDown(Key.W)) {
-            // FORWARD
-            pitch += 127;
-          }
-          if (Keyboard.IsKeyDown(Key.S)) {
-            // BACKWARDS
-            pitch -= 127;
-          }
-          if (Keyboard.IsKeyDown(Key.A)) {
-            // GOING LEFT
-            roll -= 127;
-          }
-          if (Keyboard.IsKeyDown(Key.D)) {
-            // GOING RIGHT
-            roll += 127;
-          }
-          if (Keyboard.IsKeyDown(Key.Up)) {
-            gaz += 127;
-          }
-          if (Keyboard.IsKeyDown(Key.Down)) {
-            gaz -= 127;
-          }
-          if (Keyboard.IsKeyDown(Key.Left)) {
-            yaw -= 127;
-          }
-          if (Keyboard.IsKeyDown(Key.Right)) {
-            yaw += 127;
+            if (Keyboard.IsKeyDown(Key.W)) {
+              // FORWARD
+              pitch += 100;
+            }
+            if (Keyboard.IsKeyDown(Key.S)) {
+              // BACKWARDS
+              pitch -= 100;
+            }
+            if (Keyboard.IsKeyDown(Key.A)) {
+              // GOING LEFT
+              roll -= 100;
+            }
+            if (Keyboard.IsKeyDown(Key.D)) {
+              // GOING RIGHT
+              roll += 100;
+            }
+            if (Keyboard.IsKeyDown(Key.Up)) {
+              gaz += 100;
+            }
+            if (Keyboard.IsKeyDown(Key.Down)) {
+              gaz -= 100;
+            }
+            if (Keyboard.IsKeyDown(Key.Left)) {
+              yaw -= 100;
+            }
+            if (Keyboard.IsKeyDown(Key.Right)) {
+              yaw += 100;
+            }
           }
         } else {
           // Gamepad input.
@@ -145,8 +175,8 @@ namespace DroneFlightTool {
             continue;
           }
 
-          Vector<float> LStick = gamepad_.GetLStick();
-          Vector<float> RStick = gamepad_.GetRStick();
+          Vector2 LStick = gamepad_.GetLStick();
+          Vector2 RStick = gamepad_.GetRStick();
           float LTrigger = gamepad_.GetLTrigger();
           float RTrigger = gamepad_.GetRTrigger();
 
@@ -159,18 +189,19 @@ namespace DroneFlightTool {
           LTrigger = LTrigger * LTrigger * LTrigger;
           RTrigger = RTrigger * RTrigger * RTrigger;
 
-          LStick *= 127;
-          RStick *= 127;
+          LStick *= 100;
+          RStick *= 100;
 
-          LTrigger *= -127;
-          RTrigger *= 127;
+          LTrigger *= -100;
+          RTrigger *= 100;
 
-          roll = (sbyte)LStick[0];
-          pitch = (sbyte)LStick[1];
-          yaw = (sbyte)RStick[0];
+          roll = (sbyte)LStick.X;
+          pitch = (sbyte)LStick.Y;
+          yaw = (sbyte)RStick.X;
           gaz = (sbyte)(LTrigger + RTrigger);
         }
 
+        stopwatch.Start();
         drone_.Move(true, roll, pitch, yaw, gaz);
         Thread.Sleep(20);
       }

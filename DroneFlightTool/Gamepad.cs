@@ -39,11 +39,10 @@ namespace DroneFlightTool {
     }
 
     // https://msdn.microsoft.com/en-us/library/windows/desktop/ee417001(v=vs.85).aspx
-    public Vector<float> GetLStick() {
-      float[] values = {gamepad_.LStick.X, gamepad_.LStick.Y, 0, 0};
-      Vector<float> vec = new Vector<float>(values);
-      float magnitude = (float)Math.Sqrt(vec[0] * vec[0] + vec[1] * vec[1]);
-      Vector<float> norm = vec * (1/magnitude);
+    public Vector2 GetLStick() {
+      Vector2 vec = new Vector2(gamepad_.LStick.X, gamepad_.LStick.Y);
+      float magnitude = vec.Length();
+      Vector2 norm = vec * (1/magnitude);
 
       float normalizedMagnitude = 0;
 
@@ -63,11 +62,10 @@ namespace DroneFlightTool {
     }
 
     // https://msdn.microsoft.com/en-us/library/windows/desktop/ee417001(v=vs.85).aspx
-    public Vector<float> GetRStick() {
-      float[] values = {gamepad_.RStick.X, gamepad_.RStick.Y, 0, 0};
-      Vector<float> vec = new Vector<float>(values);
-      float magnitude = (float)Math.Sqrt(vec[0] * vec[0] + vec[1] * vec[1]);
-      Vector<float> norm = vec * (1 / magnitude);
+    public Vector2 GetRStick() {
+      Vector2 vec = new Vector2(gamepad_.RStick.X, gamepad_.RStick.Y);
+      float magnitude = vec.Length();
+      Vector2 norm = vec * (1 / magnitude);
 
       float normalizedMagnitude = 0;
 
@@ -79,8 +77,7 @@ namespace DroneFlightTool {
         magnitude -= gamepad_.RStick_DeadZone;
 
         // optionally normalize the magnitude with respect to its expected
-        // range
-        // giving a magnitude value of 0.0 to 1.0
+        // range giving a magnitude value of 0.0 to 1.0
         normalizedMagnitude = magnitude / (32767 - gamepad_.RStick_DeadZone);
       }
 

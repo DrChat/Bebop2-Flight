@@ -8,18 +8,27 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Bebop2.Control {
   /**
    * <summary>Represents the connection between the controller and the drone.</summary>
    */
+  [DebuggerDisplay("Drone @ {IP}")]
   public class Connection {
     public const int DEFAULT_C2D_PORT = 54321;
     public const int DEFAULT_D2C_PORT = 43210;
     public const int DEFAULT_DISCOVERY_PORT = 44444;
     public const int DEFAULT_STREAM_PORT = 55004;
     public const string DEFAULT_DRONE_IP = "192.168.42.1";
+    public const int DEFAULT_TIMEOUT = 30;  // Timeout, in seconds.
+
+    // How long to wait before resending a reliable command, in ms.
+    private const int DEFAULT_ACK_RESEND_DELAY = 500;
+    private const int DEFAULT_TX_DELAY = 10;  // Transmission delay, in ms.
+
+    public string IP { get; private set; }
 
     /**
      * <summary>Device time, as last reported by the device.</summary>
@@ -42,25 +51,29 @@ namespace Bebop2.Control {
       }
     }
 
-    public bool Connect(string ip, int command_port) {
+    public bool Connect(string ip, int command_port, int timeout = DEFAULT_TIMEOUT) {
       C2D_socket_ = new UdpClient(ip, command_port);
       D2C_socket_ = new UdpClient(DEFAULT_D2C_PORT);
 
       // Begin receiving data.
       D2C_socket_.BeginReceive(new AsyncCallback(OnDataReceived), null);
+      C2D_socket_.Client.ReceiveTimeout = timeout;
 
+      IP = ip;
+      connection_open_ = true;
       return true;
     }
 
     public void Close() {
       // TODO(justin): Close everything out.
-      pending_commands_.Clear();
+      pending_packets_.Clear();
       ack_pending_commands_.Clear();
 
       seq_num_ = 0;
       ack_seq_num_ = 0;
       device_time_ = 0;
       last_ping_time_ = 0;
+      connection_open_ = false;
     }
 
     public bool SendCommand(Command cmd) {
@@ -87,13 +100,8 @@ namespace Bebop2.Control {
       if (payload != null) {
         bw.Write(payload);
       }
-
-      try {
-        C2D_socket_.Send(packet, packet.Length);
-      } catch (SocketException) {
-        return false;
-      }
-
+      
+      QueuePacket(packet, packet.Length);
       return true;
     }
 
@@ -167,7 +175,35 @@ namespace Bebop2.Control {
       }
     }
 
-    private void SendAck(byte seq_num, byte ack_seq) {
+    private byte[] BuildCommand(Command cmd) {
+      byte[] payload = cmd.GetData();
+      byte[] packet = new byte[7 + 5 + (payload != null ? payload.Length : 0)];
+      BinaryWriter bw = new BinaryWriter(new MemoryStream(packet));
+
+      Protocol.FrameType frame_type = cmd.Reliable
+                                          ? Protocol.FrameType.DATA_WITH_ACK
+                                          : Protocol.FrameType.DATA;
+      Protocol.FrameID frame_id = cmd.Reliable
+                                      ? Protocol.FrameID.COMMAND_WITH_ACK
+                                      : Protocol.FrameID.COMMAND;
+
+      bw.Write((byte)frame_type);
+      bw.Write((byte)frame_id);
+      bw.Write(seq_num_++);
+      bw.Write(packet.Length);
+
+      // Command header
+      bw.Write((byte)cmd.Project);
+      bw.Write((byte)cmd.Class);
+      bw.Write((ushort)cmd.ID);
+      if (payload != null) {
+        bw.Write(payload);
+      }
+
+      return packet;
+    }
+
+    private byte[] BuildAck(byte seq_num, byte ack_seq) {
       byte[] packet = new byte[7 + 1];
       BinaryWriter writer = new BinaryWriter(new MemoryStream(packet));
 
@@ -175,9 +211,10 @@ namespace Bebop2.Control {
       writer.Write((byte)Protocol.FrameID.ACK_RESPONSE);
       writer.Write((byte)ack_seq);
       writer.Write((byte)seq_num);
+      return packet;
     }
 
-    private void SendPong(byte[] data, int offset, int length) {
+    private byte[] BuildPong(byte[] data, int offset, int length) {
       byte[] packet = new byte[7 + length];
       BinaryWriter writer = new BinaryWriter(new MemoryStream(packet));
 
@@ -186,12 +223,51 @@ namespace Bebop2.Control {
       writer.Write((byte)0);
       writer.Write(length + 7);
       writer.Write(data, offset, length);
-      C2D_socket_.Send(data, data.Length);
+      return packet;
     }
 
-    private void SendWorker() {
+    /**
+     * <summary>Queues raw data to be sent to the remote device.</summary>
+     */
+    private void QueuePacket(byte[] data, int length) {
+      // TODO(justin): Actually queue this.
+      C2D_socket_.Send(data, length);
+    }
+
+    private void TXWorker() {
       // TODO: Send pending packets
       // Update and resend any unacknowledged reliable commands
+      while (connection_open_) {
+        // Send pending commmands
+        lock (pending_packets_) {
+          if (pending_packets_.Count == 0) {
+            Thread.Sleep(DEFAULT_TX_DELAY);
+            continue;
+          }
+
+          foreach (var c in pending_packets_) {
+            // If reliable, make sure the target acknowledges it.
+            if (c.Item2) {
+              // ack_pending_commands_.Add()
+            }
+
+            C2D_socket_.Send(c.Item1, c.Item1.Count());
+            Thread.Sleep(DEFAULT_TX_DELAY);
+          }
+        }
+
+        // Check and resend any pending reliable commands that haven't been
+        // acknowledged within the appropriate timeout
+      }
+    }
+
+    private void RXWorker() {
+      while (connection_open_) {
+        IPEndPoint remote_addr = new IPEndPoint(IPAddress.Any, DEFAULT_D2C_PORT);
+        byte[] data = D2C_socket_.Receive(ref remote_addr);
+
+        // OnDataReceived(data)
+      }
     }
     
     private void ProcessEventReceived(Stream stream) {
@@ -244,14 +320,16 @@ namespace Bebop2.Control {
           Debug.Assert(frame_id == Protocol.FrameID.COMMAND_ACK_RESPONSE);
           break;
         case Protocol.FrameType.DATA_WITH_ACK:
-          SendAck(seq_num, ack_seq_num_++);
+          var packet = BuildAck(seq_num, ack_seq_num_++);
+          QueuePacket(packet, packet.Length);
           break;
       }
 
       switch (frame_id) {
         case Protocol.FrameID.PING:
           // Pong packet is a copy of the ping packet.
-          SendPong(data, 7, (int)size - 7);
+          var packet = BuildPong(data, 7, (int)size - 7);
+          QueuePacket(packet, packet.Length);
           last_ping_time_ = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
 
           // Grab the current time from the drone.
@@ -276,14 +354,15 @@ namespace Bebop2.Control {
     // Public events
     public event EventHandler<Events.Event> OnEventReceived;
 
-    // Commands pending send.
-    private List<Command> pending_commands_ = new List<Command>();
+    // Packets pending send <data, reliable>
+    private List<Tuple<byte[], bool>> pending_packets_ = new List<Tuple<byte[], bool>>();
 
     // Commands pending an acknowledgement from the remote device.
     // Stored as <seq_num, cmd, send_time>
-    private List<Tuple<byte, Command, long>> ack_pending_commands_ =
-        new List<Tuple<byte, Command, long>>();
+    private List<Tuple<byte, byte[], long>> ack_pending_commands_ =
+        new List<Tuple<byte, byte[], long>>();
 
+    private bool connection_open_ = false;
     private byte seq_num_ = 0;
     private byte ack_seq_num_ = 0;
     private long device_time_ = 0; // Device time, in milliseconds.

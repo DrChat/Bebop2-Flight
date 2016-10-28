@@ -94,6 +94,7 @@ namespace Bebop2.Control {
     }
 
     private void OnEvent(object sender, Events.Event gevt) {
+      // TODO(justin): This code is absolutely ugly. Find a better way to do this.
       if (gevt.Project == 0) {
         // Common events
         switch (gevt.Class) {
@@ -129,6 +130,11 @@ namespace Bebop2.Control {
                 var evt = (Events.PilotingState.EvtSpeedChanged)gevt;
                 OnSpeedChanged(this, new float[]{evt.SpeedX, evt.SpeedY, evt.SpeedZ});
               } break;
+              // Attitude
+              case 6: {
+                var evt = (Events.PilotingState.EvtAttitudeChanged)gevt;
+                OnAttitudeChanged(this, new float[]{evt.Roll, evt.Pitch, evt.Yaw});
+              } break;
               // Altitude
               case 8: {
                 var evt = (Events.PilotingState.EvtAltitudeChanged)gevt;
@@ -145,6 +151,7 @@ namespace Bebop2.Control {
     public event EventHandler<short> OnWifiSignalChanged;
     public event EventHandler<double[]> OnPositionChanged;
     public event EventHandler<float[]> OnSpeedChanged;
+    public event EventHandler<float[]> OnAttitudeChanged;
     public event EventHandler<double> OnAltitudeChanged;
 
     private Connection connection_ = new Connection(); // Connection to the drone.
