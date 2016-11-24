@@ -114,6 +114,8 @@ namespace DroneFlightTool {
     private void InputDriverThread() {
       Stopwatch stopwatch = new Stopwatch();
       stopwatch.Start();
+
+      long emergency_pressed = 0;
       while (driver_running_) {
         stopwatch.Stop();
         double dt = (double)stopwatch.ElapsedTicks / Stopwatch.Frequency;
@@ -176,8 +178,19 @@ namespace DroneFlightTool {
             drone_.Land();
             continue;
           } else if (gamepad_.XGamepad.B_down) {
-            drone_.EmergencyLand();
+            // Delay an emergency landing by 2000 ms (2s)
+            if (emergency_pressed == 0) {
+              emergency_pressed = stopwatch.ElapsedMilliseconds;
+            } else {
+              long emergency_elapsed = stopwatch.ElapsedMilliseconds - emergency_pressed;
+              if (emergency_elapsed > 2000) {
+                drone_.EmergencyLand();
+                emergency_pressed = 0;
+              }
+            }
             continue;
+          } else {
+            emergency_pressed = 0;
           }
 
           Vector2 LStick = gamepad_.GetLStick();
